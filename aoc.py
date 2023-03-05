@@ -95,6 +95,8 @@ def main():
 
     if not path_puzzle.exists():
         path_puzzle.mkdir()
+        print('Welcome.')
+        return
 
     if not path_readme.exists():
         raise RuntimeError(f'{FPATH_FILE_README} file does not exist.')
@@ -106,7 +108,7 @@ def main():
     config.read(path_config)
     if config['DEFAULT'].getboolean('check_init'): check_access_to_paths(path_puzzle, path_stat, path_template, *path_puzzle.rglob('*'))
 
-    stat_obj = deserialize_stat_fp(path_stat, stat_obj)
+    stat_obj = deserialize_stat_fp(path_stat)
 
     parser = argparse.ArgumentParser(
         prog='aoc',
@@ -226,7 +228,7 @@ def main():
         print()
 
     if not path_puzzle_to_day.exists():
-        print('WARNING! target puzzle does not exist.')
+        print('WARNING! target puzzle does not exist. Consider adding new puzzle using `--new`')
         return
 
     path_puzzle_program = path_puzzle_to_day / 'program.py'

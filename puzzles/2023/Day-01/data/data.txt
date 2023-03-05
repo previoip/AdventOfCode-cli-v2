@@ -1,8 +1,0 @@
-[data_part_1]
-data = '''
-'''
-
-[data_part_2]
-comment = 'leave empty if not applicable'
-data = '''
-'''
