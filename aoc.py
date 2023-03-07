@@ -10,19 +10,21 @@ from importlib import util as importlib_util
 from inspect import getsourcefile
 from src.ascii_art import ascii_header
 from src.data_parser import parse
+from src.pad_str import pad_str
 
-
-INIT_CHECK = True
 FPATH_FOLDER_PUZZLE = 'puzzles\\'
 FPATH_FOLDER_TEMPLATE = 'src\\_template\\'
 FPATH_FILE_STAT = 'stats.json'
 FPATH_FILE_README = 'README.md'
 FPATH_FILE_CONFIG = 'conf.ini'
 
+ENUM_STATUS_STR = ['new', 'on-progress', 'test-assertion-failed', 'finished']
+ENUM_STATUS_ICO = ['🗿', '⌛', '💀', '⭐']
+
 def check_access_to_paths(*paths: str):
     for path in paths:
         if not os.access(path, os.R_OK ^ os.W_OK):
-            if not args.silent: print(f'folder is inaccessible: {path}')
+            print(f'folder is inaccessible: {path}')
             sys.exit()
 
 def puzzle_day_to_str(day: int):
@@ -31,34 +33,16 @@ def puzzle_day_to_str(day: int):
 def puzzle_day_from_str(puzzle_day_str: str):
     return int(puzzle_day_str.split('-')[-1])
 
-def pad_str(string, pad, align='left', fill=' '):
-    r_length = len(string)
-    l_length = 0
-    if r_length > pad:
-        return string
-
-    r_length = pad - r_length
-
-    if align[0] == 'r':
-        l_length = r_length
-        r_length = 0
-    elif align[0] == 'c':
-        l_length = r_length
-        r_length = r_length // 2
-        l_length = l_length - r_length
-
-    return (fill*l_length) + string + (fill*r_length)
-
 def serialize_stat_fp(path_stat: Path, stat_obj: dict):
     with path_stat.open('w') as fp: 
-        json.dump(stat_obj, fp)
+        json.dump(stat_obj, fp, indent=1)
     
 
 def deserialize_stat_fp(path_stat: Path, stat_obj: dict = {}):
     if not path_stat.exists():
         with path_stat.open('w') as fp:
             if not stat_obj:
-                stat_obj = {'status_enum': ['new', 'on-progress', 'test-assertion-failed', 'finished'], 'status': {}}
+                stat_obj = {'status_enum': ENUM_STATUS_STR, 'status': {}}
             json.dump(stat_obj, fp)
     else:
         with path_stat.open('r') as fp: 
@@ -68,16 +52,14 @@ def deserialize_stat_fp(path_stat: Path, stat_obj: dict = {}):
 def update_stat(stat_obj, year:int, day:int, part:int, enum_id:int):
     if enum_id < 0 or enum_id > len(stat_obj['status_enum']):
         raise ValueError(f'enum_id is not valid index: {enum_id}')
-    
     k_y = str(year)
     y = stat_obj['status'].get(k_y)
     if not y and not isinstance(y, dict):
         stat_obj['status'][k_y] = {}
-    
     k_d = puzzle_day_to_str(day)
     d = stat_obj['status'][k_y].get(k_d)
-    if not d and not isinstance(d, dict):
-        d = stat_obj['status'][k_y] = {k_d: {}}
+    if not d:
+        stat_obj['status'][k_y] = {**stat_obj['status'][k_y], k_d: {}}
 
     stat_obj['status'][k_y][k_d][str(part)] = enum_id
     return stat_obj
@@ -104,11 +86,11 @@ def main():
     if not path_config.exists():
         raise RuntimeError(f'{FPATH_FILE_CONFIG} file does not exist.')
 
+    stat_obj = deserialize_stat_fp(path_stat)
+
     config = ConfigParser()
     config.read(path_config)
     if config['DEFAULT'].getboolean('check_init'): check_access_to_paths(path_puzzle, path_stat, path_template, *path_puzzle.rglob('*'))
-
-    stat_obj = deserialize_stat_fp(path_stat)
 
     parser = argparse.ArgumentParser(
         prog='aoc',
@@ -176,6 +158,79 @@ def main():
     args = parser.parse_args()
 
     if args.gen_readme:
+        readme_tb_begin_tok = '<!-- stat-table-start -->'
+        readme_tb_end_tok   = '<!-- stat-table-end -->'
+        index_tb_begin = 0
+        status = stat_obj.get('status')
+
+        if not status:
+            print(f'something went wrong on parsing {FPATH_FILE_STAT}')
+            return
+
+        with path_readme.open('r', encoding='utf-8') as fp:
+            readme_buff = fp.readlines()
+            for line in readme_buff:
+                if line.strip() == readme_tb_begin_tok:
+                    index_tb_begin = readme_buff.index(line)
+                    while line.strip() != readme_tb_end_tok and readme_buff:
+                        line = readme_buff.pop(index_tb_begin)
+                    break
+            else:
+                index_tb_begin = len(readme_buff)
+
+        table_buff = []
+        table_buff.append(readme_tb_begin_tok)
+        table_buff.append('\n')
+        table_buff.append('<hr/>\n')
+        for y_str in sorted(status.keys()):
+            table_buff.append(f'\n#### AOC {y_str}\n')
+            table_buff.append('\n')
+            status_dict = status[y_str]
+            n_cols = len(status_dict) // 10 + 1
+            d = '|'
+            row = ['' for _ in range(12)]
+            for n_col in range(n_cols):
+                for i in range(12):
+                    if row[i].endswith(d): row[i] = row[i][:-1]
+                
+                n_col += 1
+                row[0] += d + f'Day' + d + 'P-1' + d + 'P-2' + d
+                row[1] += d + f':--' + d + ':--:' + d + ':--:' + d
+
+                for i in range(2, 12):
+                    n = i + 10 * (n_col - 1) 
+                    row[i] += d
+                    row[i] += f'{n-1:02}'
+                    row[i] += d
+                    s_d = status_dict.get(puzzle_day_to_str(n - 1))
+                    if s_d:
+                        n_p_1 = s_d.get('1')
+                        if n_p_1 or n_p_1 == 0:
+                            row[i] += ENUM_STATUS_ICO[n_p_1]
+                        else:
+                            row[i] += ' '
+                    row[i] += d
+
+                    if s_d:
+                        n_p_2 = s_d.get('2')
+                        if n_p_2 or n_p_2 == 0:
+                            row[i] += ENUM_STATUS_ICO[n_p_2]
+                        else:
+                            row[i] += ' '
+                    row[i] += d
+                        
+
+            table_buff.append('\n'.join(row))
+            table_buff.append('\n')
+
+        table_buff.append('<hr/>\n')
+        table_buff.append(readme_tb_end_tok)
+        table_buff.append('\n')
+
+        readme_buff = readme_buff[:index_tb_begin] + table_buff + readme_buff[index_tb_begin:]
+        with path_readme.open('w', encoding='utf-8') as fp:
+            fp.writelines(readme_buff)
+
         return
 
     puzzle_day_format = puzzle_day_to_str(args.day)
@@ -211,8 +266,8 @@ def main():
 
         with open(path_puzzle_program, 'w') as fo:
             fo.writelines(prog_content)
-        update_stat(stat_obj, args.year, args.day, 1, 0)
-        update_stat(stat_obj, args.year, args.day, 2, 0)
+        update_stat(stat_obj, args.year, day_increment, 1, 0)
+        update_stat(stat_obj, args.year, day_increment, 2, 0)
         serialize_stat_fp(path_stat, stat_obj)
         return
 

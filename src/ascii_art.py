@@ -22,11 +22,11 @@ def gen_chars(char: str, whitespace=' '):
         char_ord = 0
 
     length = char_map[char_ord]
-    offset = sum(char_map[:char_ord+1]) - length
+    offset = sum(char_map[:char_ord+1])
 
     res = ['' for _ in range(5)]
     for n in range(5):
-        res[n] = char_cache[n][offset: offset+length]
+        res[n] = char_cache[n][offset - length : offset]
     return res
 
 def ascii_header(string):
