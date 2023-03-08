@@ -1,0 +1,66 @@
+[data_part_1_test_1]
+res = '0'
+data = '''
+(())
+'''
+
+[data_part_1_test_2]
+res = '0'
+data = '''
+()()
+'''
+
+[data_part_1_test_3]
+res = '3'
+data = '''
+(((
+'''
+[data_part_1_test_4]
+res = '3'
+data = '''
+(()(()(
+'''
+
+[data_part_1_test_5]
+res = '3'
+data = '''
+))(((((
+'''
+
+[data_part_1_test_6]
+res = '-1'
+data = '''
+())
+'''
+
+[data_part_1_test_7]
+res = '-1'
+data = '''
+))(
+'''
+
+
+[data_part_1_test_8]
+res = '-3'
+data = '''
+)))
+'''
+
+
+[data_part_1_test_9]
+res = '-3'
+data = '''
+)())())
+'''
+
+[data_part_2_test_1]
+res = '1'
+data = '''
+)
+'''
+
+[data_part_2_test_2]
+res = '5'
+data = '''
+()())
+'''

@@ -1,0 +1,24 @@
+[data_part_1_test_1]
+res = '58'
+data = '''
+2x3x4
+'''
+
+[data_part_1_test_2]
+res = '43'
+data = '''
+1x1x10
+'''
+
+
+[data_part_2_test_1]
+res = '34'
+data = '''
+2x3x4
+'''
+
+[data_part_2_test_2]
+res = '14'
+data = '''
+1x1x10
+'''

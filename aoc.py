@@ -35,7 +35,7 @@ def puzzle_day_from_str(puzzle_day_str: str):
 
 def serialize_stat_fp(path_stat: Path, stat_obj: dict):
     with path_stat.open('w') as fp: 
-        json.dump(stat_obj, fp, indent=1)
+        json.dump(stat_obj, fp)
     
 
 def deserialize_stat_fp(path_stat: Path, stat_obj: dict = {}):
@@ -322,7 +322,7 @@ def main():
 
     eval_func = getattr(_prog_module, f'part_{args.part}')
 
-    for dtable in data_object.get_multiple_prfx('data'):
+    for n, dtable in enumerate(data_object.get_multiple_prfx('data')):
         if not args.silent: print(f'> evaluating: {dtable.name}')
         eval_result = eval_func(dtable.get('data'))
         print(f'>> evaluation result: {eval_result}')
@@ -333,7 +333,7 @@ def main():
                 print(f'>> test passed')
                 update_stat(stat_obj, args.year, args.day, args.part, 3)
             else:
-                print(f'>> assertion failed {eval_result} != {res}')
+                print(f'<> assertion failed test {n} part {args.part}: {eval_result} != {res}')
                 update_stat(stat_obj, args.year, args.day, args.part, 2)
 
     serialize_stat_fp(path_stat, stat_obj)
