@@ -1,17 +1,16 @@
 [data_part_1_test_1]
-res = '[test value]'
-data = '''
-'''
+res = '2'
+data = '>'
 
 [data_part_1_test_2]
-res = '[test value]'
-data = '''
-'''
+res = '4'
+data = '^>v<'
+
 
 [data_part_1_test_3]
-res = '[test value]'
-data = '''
-'''
+res = '2'
+data = '^v^v^v^v^v'
+
 
 
 [data_part_2_test_1]
